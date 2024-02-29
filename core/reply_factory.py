@@ -32,6 +32,11 @@ def record_current_answer(answer, current_question_id, session):
     '''
     Validates and stores the answer for the current question to django session.
     '''
+
+    if not answer:
+        return False
+    session["answers"] = session.get("answers",{})
+    session["answers"][current_question_id] = answer
     return True, ""
 
 
@@ -39,8 +44,11 @@ def get_next_question(current_question_id):
     '''
     Fetches the next question from the PYTHON_QUESTION_LIST based on the current_question_id.
     '''
-
-    return "dummy question", -1
+    next_question_idx= PYTHON_QUESTION_LIST.index(current_question_id) + 1
+    if next_question_idx < len(PYTHON_QUESTION_LIST):
+        return PYTHON_QUESTION_LIST[next_question_idx], next_question_idx
+    else:
+        return "dummy question", -1
 
 
 def generate_final_response(session):
@@ -49,4 +57,15 @@ def generate_final_response(session):
     by the user for questions in the PYTHON_QUESTION_LIST.
     '''
 
-    return "dummy result"
+    correct_answers=0
+    total_questions = len((PYTHON_QUESTION_LIST))
+    user_answers = session.get("answers",{})
+
+    for question_id, correct_answer in PYTHON_QUESTION_LIST.items():
+        if question_id in user_answers and user_answers[question_id] == correct_answer:
+            correct_answers+=1
+        
+    performance_percentage = (correct_answers / total_questions) * 100
+    final_response =  f"Your performance: {correct_answers}/{total_questions} ({performance_percentage:.2f}%)"
+
+    return final_response
